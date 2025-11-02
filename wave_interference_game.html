@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>波的干涉遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: #f0f0f0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .left-controls, .right-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-up {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-up:hover {
+            background: #45a049;
+        }
+        
+        .btn-down {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-down:hover {
+            background: #da190b;
+        }
+        
+        .btn-run {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+        }
+        
+        .btn-run:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #654391 100%);
+        }
+        
+        .btn-run:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .center-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .speed-control label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .speed-slider {
+            width: 200px;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            -moz-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .speed-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .speed-value {
+            font-size: 12px;
+            color: #666;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .status {
+            margin-top: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌊 波的干涉遊戲 🌊</h1>
+    <div class="container">
+        <div class="instructions">
+            <h3>📖 遊戲說明</h3>
+            <ul>
+                <li>選擇繩子左端和右端的甩動方向（向上或向下）</li>
+                <li>點擊「開始」按鈕，左右兩邊會向各自選定的方向甩動一次</li>
+                <li>每個甩動會產生半個波型（向上甩產生上半波，向下甩產生下半波）</li>
+                <li>當兩個半波傳遞到中間相遇時，會發生干涉現象：</li>
+                <li style="margin-left: 20px;">• <strong style="color: #9C27B0;">紫色</strong>：建設性干涉（兩個波同方向，波相加）</li>
+                <li style="margin-left: 20px;">• <strong style="color: #FF9800;">橙色</strong>：破壞性干涉（兩個波反方向，波抵消）</li>
+                <li style="margin-left: 20px;">• <strong style="color: #2196F3;">藍色</strong>：單個波或正常狀態</li>
+            </ul>
+        </div>
+        
+        <canvas id="waveCanvas" width="1000" height="400"></canvas>
+        
+        <div class="controls">
+            <div class="left-controls">
+                <div class="control-group">
+                    <label>左端控制</label>
+                    <button class="btn-up" id="leftUp">↑ 向上甩</button>
+                    <button class="btn-down" id="leftDown">↓ 向下甩</button>
+                </div>
+            </div>
+            
+            <div class="center-controls">
+                <button class="btn-run" id="runBtn">開始</button>
+                <div class="speed-control">
+                    <label for="speedSlider">波傳播速度</label>
+                    <input type="range" id="speedSlider" class="speed-slider" min="1" max="10" value="3" step="0.5">
+                    <span class="speed-value" id="speedValue">3.0</span>
+                </div>
+            </div>
+            
+            <div class="right-controls">
+                <div class="control-group">
+                    <label>右端控制</label>
+                    <button class="btn-up" id="rightUp">↑ 向上甩</button>
+                    <button class="btn-down" id="rightDown">↓ 向下甩</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status" id="status">請選擇左右兩端的甩動方向，然後點擊「開始」</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 遊戲狀態
+        let leftDirection = null; // 1: 向上, -1: 向下
+        let rightDirection = null;
+        let isAnimating = true; // 始終運行動畫
+        let leftWaves = []; // 存儲多個左波
+        let rightWaves = []; // 存儲多個右波
+        let animationId = null;
+        
+        // 繩子參數
+        const ropeLength = 900;
+        const ropeY = canvas.height / 2;
+        const leftEnd = 50;
+        const rightEnd = leftEnd + ropeLength;
+        const numPoints = 200; // 繩子上的點數
+        
+        // 波的參數
+        let waveSpeed = 3; // 波的傳播速度（可調整）
+        const waveAmplitude = 100; // 波的振幅
+        const wavelength = 180; // 波的波長
+        
+        // 按鈕事件
+        document.getElementById('leftUp').addEventListener('click', () => {
+            leftDirection = 1;
+            updateStatus();
+            updateButtonStates();
+            highlightButtons();
+        });
+        
+        document.getElementById('leftDown').addEventListener('click', () => {
+            leftDirection = -1;
+            updateStatus();
+            updateButtonStates();
+            highlightButtons();
+        });
+        
+        document.getElementById('rightUp').addEventListener('click', () => {
+            rightDirection = 1;
+            updateStatus();
+            updateButtonStates();
+            highlightButtons();
+        });
+        
+        document.getElementById('rightDown').addEventListener('click', () => {
+            rightDirection = -1;
+            updateStatus();
+            updateButtonStates();
+            highlightButtons();
+        });
+        
+        function highlightButtons() {
+            // 重置所有按钮样式
+            document.getElementById('leftUp').style.opacity = '0.6';
+            document.getElementById('leftDown').style.opacity = '0.6';
+            document.getElementById('rightUp').style.opacity = '0.6';
+            document.getElementById('rightDown').style.opacity = '0.6';
+            
+            // 高亮选中的按钮
+            if (leftDirection === 1) {
+                document.getElementById('leftUp').style.opacity = '1';
+                document.getElementById('leftUp').style.transform = 'scale(1.1)';
+                document.getElementById('leftDown').style.transform = 'scale(1)';
+            } else if (leftDirection === -1) {
+                document.getElementById('leftDown').style.opacity = '1';
+                document.getElementById('leftDown').style.transform = 'scale(1.1)';
+                document.getElementById('leftUp').style.transform = 'scale(1)';
+            } else {
+                document.getElementById('leftUp').style.transform = 'scale(1)';
+                document.getElementById('leftDown').style.transform = 'scale(1)';
+            }
+            
+            if (rightDirection === 1) {
+                document.getElementById('rightUp').style.opacity = '1';
+                document.getElementById('rightUp').style.transform = 'scale(1.1)';
+                document.getElementById('rightDown').style.transform = 'scale(1)';
+            } else if (rightDirection === -1) {
+                document.getElementById('rightDown').style.opacity = '1';
+                document.getElementById('rightDown').style.transform = 'scale(1.1)';
+                document.getElementById('rightUp').style.transform = 'scale(1)';
+            } else {
+                document.getElementById('rightUp').style.transform = 'scale(1)';
+                document.getElementById('rightDown').style.transform = 'scale(1)';
+            }
+        }
+        
+        document.getElementById('runBtn').addEventListener('click', () => {
+            if (leftDirection !== null && rightDirection !== null) {
+                startAnimation();
+            }
+        });
+        
+        // 波速度滑块事件监听器
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        
+        speedSlider.addEventListener('input', (e) => {
+            waveSpeed = parseFloat(e.target.value);
+            speedValue.textContent = waveSpeed.toFixed(1);
+        });
+        
+        function updateStatus() {
+            const statusEl = document.getElementById('status');
+            let status = '';
+            
+            if (leftDirection === null && rightDirection === null) {
+                status = '請選擇左右兩端的甩動方向';
+            } else if (leftDirection === null) {
+                status = '請選擇左端的甩動方向';
+            } else if (rightDirection === null) {
+                status = '請選擇右端的甩動方向';
+            } else {
+                const leftDir = leftDirection === 1 ? '向上' : '向下';
+                const rightDir = rightDirection === 1 ? '向上' : '向下';
+                status = `左端: ${leftDir} | 右端: ${rightDir} | 點擊「開始」觀察干涉現象`;
+            }
+            
+            statusEl.textContent = status;
+        }
+        
+        function updateButtonStates() {
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = leftDirection === null || rightDirection === null;
+        }
+        
+        function resetGame() {
+            leftDirection = null;
+            rightDirection = null;
+            leftWaves = [];
+            rightWaves = [];
+            updateStatus();
+            updateButtonStates();
+            highlightButtons();
+            draw();
+        }
+        
+        function startAnimation() {
+            updateButtonStates();
+            
+            // 添加新的波（不重置現有的波）
+            if (leftDirection !== null) {
+                leftWaves.push({
+                    x: leftEnd,
+                    direction: leftDirection,
+                    time: 0
+                });
+            }
+            
+            if (rightDirection !== null) {
+                rightWaves.push({
+                    x: rightEnd,
+                    direction: rightDirection,
+                    time: 0
+                });
+            }
+        }
+        
+        function animate() {
+            // 更新所有波的時間
+            leftWaves.forEach(wave => wave.time++);
+            rightWaves.forEach(wave => wave.time++);
+            
+            // 移除已經傳播完畢的波
+            const maxTime = ropeLength / waveSpeed * 2;
+            leftWaves = leftWaves.filter(wave => wave.time <= maxTime);
+            rightWaves = rightWaves.filter(wave => wave.time <= maxTime);
+            
+            draw();
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function draw() {
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製背景網格（可選）
+            drawGrid();
+            
+            // 計算繩子的形狀
+            const ropePoints = [];
+            for (let i = 0; i <= numPoints; i++) {
+                const x = leftEnd + (i / numPoints) * ropeLength;
+                let y = ropeY;
+                let leftWaveY = 0;
+                let rightWaveY = 0;
+                
+                // 計算所有左波的影響（只產生半個波型）
+                for (const leftWave of leftWaves) {
+                    const distanceFromLeft = x - leftEnd;
+                    const waveDistance = leftWave.time * waveSpeed;
+                    
+                    if (distanceFromLeft >= 0 && distanceFromLeft <= waveDistance) {
+                        const wavePosition = waveDistance - distanceFromLeft;
+                        if (wavePosition <= wavelength) {
+                            // 只生成半個週期（0 到 π），這樣只會產生一個半波
+                            const phase = (wavePosition / wavelength) * Math.PI;
+                            // 使用衰减函数使波逐渐消失
+                            const decay = Math.exp(-wavePosition / 150);
+                            
+                            // 只保留半個波型：
+                            // 向上甩 (direction = 1)：只保留negative部分（y减小，绳子上移）
+                            // 向下甩 (direction = -1)：只保留positive部分（y增大，绳子下移）
+                            // 確保振幅對稱：使用絕對值計算振幅，然後根據方向賦予符號
+                            const absAmplitude = Math.abs(Math.sin(phase)) * waveAmplitude * decay;
+                            let amplitude;
+                            if (leftWave.direction === 1) {
+                                // 向上甩：使用負值（y減小，向上）
+                                amplitude = -absAmplitude;
+                            } else {
+                                // 向下甩：使用正值（y增大，向下）
+                                amplitude = absAmplitude;
+                            }
+                            
+                            leftWaveY += amplitude;
+                        }
+                    }
+                }
+                
+                // 計算所有右波的影響（只產生半個波型）
+                for (const rightWave of rightWaves) {
+                    const distanceFromRight = rightEnd - x;
+                    const waveDistance = rightWave.time * waveSpeed;
+                    
+                    if (distanceFromRight >= 0 && distanceFromRight <= waveDistance) {
+                        const wavePosition = waveDistance - distanceFromRight;
+                        if (wavePosition <= wavelength) {
+                            // 只生成半個週期（0 到 π），這樣只會產生一個半波
+                            const phase = (wavePosition / wavelength) * Math.PI;
+                            // 使用衰减函数使波逐渐消失
+                            const decay = Math.exp(-wavePosition / 150);
+                            
+                            // 只保留半個波型：
+                            // 向上甩 (direction = 1)：只保留negative部分（y减小，绳子上移）
+                            // 向下甩 (direction = -1)：只保留positive部分（y增大，绳子下移）
+                            // 確保振幅對稱：使用絕對值計算振幅，然後根據方向賦予符號
+                            const absAmplitude = Math.abs(Math.sin(phase)) * waveAmplitude * decay;
+                            let amplitude;
+                            if (rightWave.direction === 1) {
+                                // 向上甩：使用負值（y減小，向上）
+                                amplitude = -absAmplitude;
+                            } else {
+                                // 向下甩：使用正值（y增大，向下）
+                                amplitude = absAmplitude;
+                            }
+                            
+                            rightWaveY += amplitude;
+                        }
+                    }
+                }
+                
+                // 所有波疊加（干涉）
+                y = ropeY + leftWaveY + rightWaveY;
+                
+                ropePoints.push({ x, y });
+            }
+            
+            // 繪製繩子（根據干涉強度改變顏色）
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // 繪製繩子主體，根據位置決定顏色
+            for (let i = 0; i < ropePoints.length - 1; i++) {
+                const p1 = ropePoints[i];
+                const p2 = ropePoints[i + 1];
+                const x = (p1.x + p2.x) / 2;
+                
+                // 計算此位置的波強度（用於決定顏色）
+                let totalAmplitude = 0;
+                let leftAmplitude = 0;
+                let rightAmplitude = 0;
+                let hasLeftWave = false;
+                let hasRightWave = false;
+                
+                // 計算所有左波的影響
+                for (const leftWave of leftWaves) {
+                    const distFromLeft = x - leftEnd;
+                    const waveDist = leftWave.time * waveSpeed;
+                    if (distFromLeft >= 0 && distFromLeft <= waveDist) {
+                        const wavePos = waveDist - distFromLeft;
+                        if (wavePos <= wavelength) {
+                            // 只生成半個週期（0 到 π），這樣只會產生一個半波
+                            const phase = (wavePos / wavelength) * Math.PI;
+                            const decay = Math.exp(-wavePos / 150);
+                            // 使用絕對值確保振幅對稱
+                            const absAmp = Math.abs(Math.sin(phase)) * decay;
+                            let amp;
+                            if (leftWave.direction === 1) {
+                                // 向上甩：使用負值（y減小，向上）
+                                amp = -absAmp;
+                            } else {
+                                // 向下甩：使用正值（y增大，向下）
+                                amp = absAmp;
+                            }
+                            if (Math.abs(amp) > 0.01) {
+                                const waveAmp = amp * waveAmplitude;
+                                leftAmplitude += waveAmp;
+                                totalAmplitude += Math.abs(waveAmp);
+                                hasLeftWave = true;
+                            }
+                        }
+                    }
+                }
+                
+                // 計算所有右波的影響
+                for (const rightWave of rightWaves) {
+                    const distFromRight = rightEnd - x;
+                    const waveDist = rightWave.time * waveSpeed;
+                    if (distFromRight >= 0 && distFromRight <= waveDist) {
+                        const wavePos = waveDist - distFromRight;
+                        if (wavePos <= wavelength) {
+                            // 只生成半個週期（0 到 π），這樣只會產生一個半波
+                            const phase = (wavePos / wavelength) * Math.PI;
+                            const decay = Math.exp(-wavePos / 150);
+                            // 使用絕對值確保振幅對稱
+                            const absAmp = Math.abs(Math.sin(phase)) * decay;
+                            let amp;
+                            if (rightWave.direction === 1) {
+                                // 向上甩：使用負值（y減小，向上）
+                                amp = -absAmp;
+                            } else {
+                                // 向下甩：使用正值（y增大，向下）
+                                amp = absAmp;
+                            }
+                            if (Math.abs(amp) > 0.01) {
+                                const waveAmp = amp * waveAmplitude;
+                                rightAmplitude += waveAmp;
+                                totalAmplitude += Math.abs(waveAmp);
+                                hasRightWave = true;
+                            }
+                        }
+                    }
+                }
+                
+                // 如果兩個波都在此位置，顯示干涉顏色
+                const isInterference = hasLeftWave && hasRightWave;
+                
+                if (isInterference) {
+                    // 判斷兩個半波的方向是否相同
+                    const sameDirection = (leftAmplitude >= 0 && rightAmplitude >= 0) || 
+                                        (leftAmplitude <= 0 && rightAmplitude <= 0);
+                    
+                    // 計算疊加後的振幅
+                    const combinedAmplitude = Math.abs(leftAmplitude + rightAmplitude);
+                    const individualAmplitude = Math.abs(leftAmplitude) + Math.abs(rightAmplitude);
+                    
+                    if (sameDirection && combinedAmplitude > individualAmplitude * 0.5) {
+                        // 建設性干涉（兩個半波同方向，波相加）- 紫色
+                        ctx.strokeStyle = '#9C27B0';
+                    } else if (!sameDirection && combinedAmplitude < individualAmplitude * 0.5) {
+                        // 破壞性干涉（兩個半波反方向，波抵消）- 橙色
+                        ctx.strokeStyle = '#FF9800';
+                    } else {
+                        // 正常波 - 藍色
+                        ctx.strokeStyle = '#2196F3';
+                    }
+                } else {
+                    // 正常波 - 藍色
+                    ctx.strokeStyle = '#2196F3';
+                }
+                
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+            
+            // 繪製繩子端點
+            ctx.fillStyle = '#1976D2';
+            ctx.beginPath();
+            ctx.arc(leftEnd, ropeY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(rightEnd, ropeY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 繪製繩子中心點（紅色小點，隨震動垂直移動）
+            const centerX = (leftEnd + rightEnd) / 2;
+            // 計算中心位置的y坐標（考慮所有波的影響）
+            let centerY = ropeY;
+            let centerLeftWaveY = 0;
+            let centerRightWaveY = 0;
+            
+            // 計算所有左波在中心位置的影響
+            for (const leftWave of leftWaves) {
+                const distanceFromLeft = centerX - leftEnd;
+                const waveDistance = leftWave.time * waveSpeed;
+                if (distanceFromLeft >= 0 && distanceFromLeft <= waveDistance) {
+                    const wavePosition = waveDistance - distanceFromLeft;
+                    if (wavePosition <= wavelength) {
+                        const phase = (wavePosition / wavelength) * Math.PI;
+                        const decay = Math.exp(-wavePosition / 150);
+                        const absAmplitude = Math.abs(Math.sin(phase)) * waveAmplitude * decay;
+                        if (leftWave.direction === 1) {
+                            centerLeftWaveY -= absAmplitude;
+                        } else {
+                            centerLeftWaveY += absAmplitude;
+                        }
+                    }
+                }
+            }
+            
+            // 計算所有右波在中心位置的影響
+            for (const rightWave of rightWaves) {
+                const distanceFromRight = rightEnd - centerX;
+                const waveDistance = rightWave.time * waveSpeed;
+                if (distanceFromRight >= 0 && distanceFromRight <= waveDistance) {
+                    const wavePosition = waveDistance - distanceFromRight;
+                    if (wavePosition <= wavelength) {
+                        const phase = (wavePosition / wavelength) * Math.PI;
+                        const decay = Math.exp(-wavePosition / 150);
+                        const absAmplitude = Math.abs(Math.sin(phase)) * waveAmplitude * decay;
+                        if (rightWave.direction === 1) {
+                            centerRightWaveY -= absAmplitude;
+                        } else {
+                            centerRightWaveY += absAmplitude;
+                        }
+                    }
+                }
+            }
+            
+            // 計算中心點的實際y坐標（所有波疊加）
+            centerY = ropeY + centerLeftWaveY + centerRightWaveY;
+            
+            ctx.fillStyle = '#f44336';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+        }
+        
+        function drawGrid() {
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // 繪製水平網格線
+            for (let y = 50; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // 繪製中心線（繩子位置）
+            ctx.strokeStyle = '#999';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, ropeY);
+            ctx.lineTo(canvas.width, ropeY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // 初始化
+        updateStatus();
+        updateButtonStates();
+        draw();
+        animate(); // 啟動動畫循環
+    </script>
+</body>
+</html>
+
